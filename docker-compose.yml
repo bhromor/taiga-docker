@@ -1,0 +1,54 @@
+postgres:
+  image: postgres:9.5.9
+  labels:
+      io.rancher.scheduler.affinity:host_label_soft: taiga=true
+  environment:
+    POSTGRES_USER: taiga
+    POSTGRES_PASSWORD: taiga
+  volumes:
+    - taiga-db:/var/lib/postgresql/data
+  volume_driver: convoy
+  restart: always
+  ports:
+    - 5432:5432
+
+taigaback:
+  image: bhromor/taiga-back
+  hostname: taiga.shimahin.com
+  labels:
+      io.rancher.scheduler.affinity:host_label_soft: taiga=true
+  environment:
+    HOSTNAME: taiga.shimahin.com
+    SECRET_KEY: examplesecretkey
+    EMAIL_USE_TLS: 'False'
+    DEFAULT_FROM_EMAIL: notification@shophobe.com
+    EMAIL_HOST: in-v3.mailjet.com
+    EMAIL_PORT: 587
+    EMAIL_HOST_USER: 77892a166f85db985573d588c435575c
+    EMAIL_HOST_PASSWORD: a74ec2f92ff90afa0d22063ceef77df4
+    POSTGRES_HOST: postgres
+    POSTGRES_PORT: 5432
+  links:
+    - postgres:postgres
+  volumes:
+    - tgb_m:/usr/local/taiga/media
+    - tgb_s:/usr/local/taiga/static
+    - tgb_l:/usr/local/taiga/logs
+  restart: always
+
+taigafront:
+  image: bhromor/taiga-front
+  hostname: taiga.shimahin.com
+  labels:
+      io.rancher.scheduler.affinity:host_label_soft: taiga=true
+  volumes:
+    - tgb_m:/usr/local/taiga/media
+    - tgb_s:/usr/local/taiga/static
+    - tgb_l:/usr/local/taiga/logs
+  links:
+    - taigaback:taiga-back
+  environment:
+    HOSTNAME: taiga.shimahin.com
+  ports:
+    - 80:80
+  restart: always
